@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ResumeX</title>
+    <meta name="description" content="Match resumes to job descriptions and get suggestions to improve your resume.">
+    <style>
+    :root {
+        --bg: #f4f6f8;
+        --card: #ffffff;
+        --text: #1f2937;
+        --muted: #6b7280;
+        --border: #d1d5db;
+        --accent: #2563eb;
+        --accent-hover: #1d4ed8;
+        --good-bg: #dcfce7;
+        --good: #166534;
+        --bad-bg: #fee2e2;
+        --bad: #991b1b;
+        --pref-bg: #dbeafe;
+        --pref: #1e40af;
+        --shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+    }
+
+    @media (prefers-color-scheme: dark) {
+        :root {
+            --bg: #0f172a;
+            --card: #1e293b;
+            --text: #e5e7eb;
+            --muted: #94a3b8;
+            --border: #334155;
+            --accent: #3b82f6;
+            --accent-hover: #2563eb;
+            --good-bg: #14532d;
+            --good: #bbf7d0;
+            --bad-bg: #7f1d1d;
+            --bad: #fecaca;
+            --pref-bg: #1e3a8a;
+            --pref: #bfdbfe;
+            --shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+        }
+    }
+
+    * {
+        box-sizing: border-box;
+    }
+
+    body {
+        margin: 0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+    }
+
+    .container {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 40px 16px;
+    }
+
+    .header {
+        margin-bottom: 24px;
+    }
+
+    .header h1 {
+        margin: 0;
+        font-size: 42px;
+    }
+
+    .header p {
+        margin-top: 8px;
+        color: var(--muted);
+        font-size: 17px;
+    }
+
+    .tabs {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 16px;
+        flex-wrap: wrap;
+    }
+
+    .tab {
+        background: var(--card);
+        color: var(--text);
+        border: 1px solid var(--border);
+        padding: 10px 18px;
+        border-radius: 999px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .tab.active {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: white;
+    }
+
+    .card {
+        background: var(--card);
+        border-radius: 14px;
+        padding: 24px;
+        box-shadow: var(--shadow);
+        margin-bottom: 24px;
+    }
+
+    .card h2 {
+        margin-top: 0;
+    }
+
+    .hint {
+        color: var(--muted);
+        margin-top: -6px;
+    }
+
+    textarea {
+        width: 100%;
+        min-height: 220px;
+        resize: vertical;
+        padding: 16px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        font-size: 15px;
+        line-height: 1.5;
+        outline: none;
+        background: var(--card);
+        color: var(--text);
+        font-family: inherit;
+    }
+
+    textarea:focus {
+        border-color: var(--accent);
+    }
+
+    .file-drop {
+        display: block;
+        border: 2px dashed var(--border);
+        border-radius: 10px;
+        padding: 20px;
+        text-align: center;
+        color: var(--muted);
+        cursor: pointer;
+        margin-bottom: 16px;
+    }
+
+    .file-drop.has-file {
+        border-color: var(--accent);
+        color: var(--text);
+    }
+
+    .file-drop input {
+        display: none;
+    }
+
+    .actions {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        align-items: center;
+        margin-top: 16px;
+    }
+
+    button.primary {
+        background: var(--accent);
+        color: white;
+        border: none;
+        padding: 14px 22px;
+        border-radius: 10px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    button.primary:hover {
+        background: var(--accent-hover);
+    }
+
+    button.primary:disabled {
+        opacity: 0.6;
+        cursor: wait;
+    }
+
+    button.link {
+        background: none;
+        border: none;
+        color: var(--accent);
+        font-size: 15px;
+        cursor: pointer;
+        padding: 0;
+    }
+
+    .candidate-card {
+        background: var(--card);
+        border-radius: 14px;
+        padding: 24px;
+        margin-bottom: 20px;
+        box-shadow: var(--shadow);
+    }
+
+    .candidate-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 20px;
+    }
+
+    .candidate-header h2 {
+        margin: 0;
+        overflow-wrap: anywhere;
+    }
+
+    .candidate-header p {
+        margin: 6px 0 0;
+        color: var(--muted);
+    }
+
+    .match-score {
+        font-size: 28px;
+        font-weight: bold;
+        color: var(--accent);
+        text-align: right;
+        white-space: nowrap;
+    }
+
+    .match-score span {
+        display: block;
+        font-size: 14px;
+        font-weight: normal;
+        color: var(--muted);
+    }
+
+    .bar {
+        height: 8px;
+        background: var(--border);
+        border-radius: 999px;
+        overflow: hidden;
+        margin: 16px 0;
+    }
+
+    .bar div {
+        height: 100%;
+        background: var(--accent);
+    }
+
+    .candidate-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 20px;
+        margin: 16px 0;
+        color: var(--muted);
+    }
+
+    .skills {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 20px;
+    }
+
+    .skill {
+        display: inline-block;
+        padding: 7px 11px;
+        border-radius: 999px;
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+    .job-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--text) !important;
+    }
+
+    .skill.good {
+        background: var(--good-bg);
+        color: var(--good);
+    }
+
+    .skill.bad {
+        background: var(--bad-bg);
+        color: var(--bad);
+    }
+
+    .skill.preferred {
+        background: var(--pref-bg);
+        color: var(--pref);
+    }
+
+    .preview {
+        line-height: 1.6;
+        color: var(--muted);
+    }
+
+    .suggestions li {
+        margin-bottom: 10px;
+        line-height: 1.5;
+    }
+
+    .error {
+        color: var(--bad);
+    }
+
+    footer {
+        text-align: center;
+        color: var(--muted);
+        font-size: 14px;
+        padding: 20px 0 0;
+    }
+
+    footer a {
+        color: var(--accent);
+    }
+
+    @media (max-width: 640px) {
+        .header h1 {
+            font-size: 32px;
+        }
+
+        .candidate-header {
+            flex-direction: column;
+        }
+
+        .match-score {
+            text-align: left;
+        }
+    }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+
+        <div class="header">
+            <h1>ResumeX</h1>
+            <p>Match resumes to job descriptions using skill, title and experience scoring.
+                <span id="datasetInfo"></span></p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" data-mode="rank">Find Candidates</button>
+            <button class="tab" data-mode="analyze">Check My Resume</button>
+        </div>
+
+        <div class="card">
+
+            <div id="rankIntro">
+                <h2>Job Description</h2>
+                <p class="hint">Paste a job description to rank the resumes in the dataset.</p>
+            </div>
+
+            <div id="analyzeIntro" hidden>
+                <h2>Your Resume</h2>
+                <p class="hint">Upload your resume as a PDF, then paste the job you're applying for.</p>
+
+                <label class="file-drop" id="fileDrop">
+                    <input type="file" id="resumeFile" accept="application/pdf,.pdf">
+                    <span id="fileLabel">Click to choose a PDF resume (max 5 MB)</span>
+                </label>
+
+                <h2>Job Description</h2>
+            </div>
+
+            <textarea
+                id="jobDescription"
+                placeholder="Paste the job description here..."></textarea>
+
+            <div class="actions">
+                <button class="primary" id="submitButton">Find Best Candidates</button>
+                <button class="link" id="sampleButton">Try a sample job</button>
+            </div>
+
+        </div>
+
+        <div id="results"></div>
+
+        <footer>
+            Built with FastAPI and PyMuPDF.
+            Dataset: <a href="https://www.kaggle.com/datasets/snehaanbhawal/resume-dataset" target="_blank" rel="noopener">Kaggle Resume Dataset</a>.
+        </footer>
+
+    </div>
+
+<script>
+    const SAMPLE_JOB = `Job Title: Software Engineer
+
+We are looking for a Software Engineer to build and maintain our cloud services.
+
+Required Skills:
+Python, SQL, AWS, Docker
+
+Preferred Skills:
+React, Kubernetes, Git
+
+At least 3 years of experience in software development.`;
+
+    const escapeHtml = (value) => String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+
+    const skillChips = (skills, cls, mark) => skills
+        .map(skill => `<span class="skill ${cls}">${mark} ${escapeHtml(skill)}</span>`)
+        .join("");
+
+    const submitButton = document.getElementById("submitButton");
+    const sampleButton = document.getElementById("sampleButton");
+    const jobDescription = document.getElementById("jobDescription");
+    const resumeFile = document.getElementById("resumeFile");
+    const fileDrop = document.getElementById("fileDrop");
+    const fileLabel = document.getElementById("fileLabel");
+    const results = document.getElementById("results");
+
+    let mode = "rank";
+
+    document.querySelectorAll(".tab").forEach(tab => {
+        tab.addEventListener("click", () => {
+            mode = tab.dataset.mode;
+
+            document.querySelectorAll(".tab").forEach(t =>
+                t.classList.toggle("active", t === tab)
+            );
+
+            document.getElementById("rankIntro").hidden = mode !== "rank";
+            document.getElementById("analyzeIntro").hidden = mode !== "analyze";
+            submitButton.textContent = mode === "rank"
+                ? "Find Best Candidates"
+                : "Analyze My Resume";
+            results.innerHTML = "";
+        });
+    });
+
+    resumeFile.addEventListener("change", () => {
+        const file = resumeFile.files[0];
+        fileDrop.classList.toggle("has-file", Boolean(file));
+        fileLabel.textContent = file
+            ? `Selected: ${file.name}`
+            : "Click to choose a PDF resume (max 5 MB)";
+    });
+
+    sampleButton.addEventListener("click", () => {
+        jobDescription.value = SAMPLE_JOB;
+    });
+
+    fetch("/resumes")
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById("datasetInfo").textContent =
+                `${data.count.toLocaleString()} resumes across ${Object.keys(data.categories).length} industries.`;
+        })
+        .catch(() => {});
+
+    submitButton.addEventListener("click", async () => {
+        const jd = jobDescription.value.trim();
+
+        if (!jd) {
+            results.innerHTML = `<p class="error">Please paste a job description first.</p>`;
+            return;
+        }
+
+        if (mode === "analyze" && !resumeFile.files[0]) {
+            results.innerHTML = `<p class="error">Please choose your resume PDF first.</p>`;
+            return;
+        }
+
+        submitButton.disabled = true;
+        results.innerHTML = mode === "rank"
+            ? "<p>Matching candidates...</p>"
+            : "<p>Analyzing your resume...</p>";
+
+        try {
+            let response;
+
+            if (mode === "rank") {
+                response = await fetch("/match-job", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ job_description: jd })
+                });
+            } else {
+                const form = new FormData();
+                form.append("resume", resumeFile.files[0]);
+                form.append("job_description", jd);
+
+                response = await fetch("/analyze-resume", {
+                    method: "POST",
+                    body: form
+                });
+            }
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.detail || `Server returned ${response.status}`);
+            }
+
+            results.innerHTML = mode === "rank"
+                ? renderRanking(data)
+                : renderAnalysis(data);
+
+        } catch (error) {
+            results.innerHTML = `<p class="error">Something went wrong: ${escapeHtml(error.message)}</p>`;
+            console.error(error);
+        } finally {
+            submitButton.disabled = false;
+        }
+    });
+
+    function renderSummary(data) {
+        return `
+            <div class="card">
+                <h2>Job Match Summary</h2>
+                <p><strong>Role:</strong> ${escapeHtml(data.target_job_title)}</p>
+                <p><strong>Required Skills:</strong>
+                    ${escapeHtml(data.required_skills?.join(", ") || "None detected")}</p>
+                <p><strong>Preferred Skills:</strong>
+                    ${escapeHtml(data.preferred_skills?.join(", ") || "None detected")}</p>
+                ${data.top_candidates
+                    ? `<p><strong>Candidates Ranked:</strong> ${data.top_candidates.length}</p>`
+                    : ""}
+            </div>
+        `;
+    }
+
+    function renderCandidate(candidate, heading) {
+        const requiredTotal =
+            candidate.required_matched.length + candidate.required_missing.length;
+
+        return `
+            <div class="candidate-card">
+
+                <div class="candidate-header">
+                    <div>
+                        <h2>${heading}</h2>
+                        <p class="job-title">${escapeHtml(candidate.job_title || "Job Title Unknown")}</p>
+                        <p>${escapeHtml(candidate.category)}</p>
+                    </div>
+
+                    <div class="match-score">
+                        ${candidate.fit_score}%
+                        <span>Overall Fit</span>
+                    </div>
+                </div>
+
+                <div class="bar"><div style="width: ${candidate.fit_score}%"></div></div>
+
+                <div class="candidate-meta">
+                    <span>Required skills: ${candidate.required_matched.length}/${requiredTotal}</span>
+                    <span>Title match: ${candidate.title_match}%</span>
+                    <span>Experience: ${candidate.years_experience} yrs
+                        ${candidate.required_experience
+                            ? (candidate.experience_met
+                                ? `(✓ meets ${candidate.required_experience}+)`
+                                : `(✗ needs ${candidate.required_experience}+)`)
+                            : ""}</span>
+                    <span>Education: ${escapeHtml(candidate.education?.join(", ") || "Not detected")}</span>
+                    <span>Certifications: ${escapeHtml(candidate.certifications?.join(", ") || "None detected")}</span>
+                </div>
+
+                <h3>Required Skills</h3>
+                <div class="skills">
+                    ${skillChips(candidate.required_matched, "good", "✓")}
+                    ${skillChips(candidate.required_missing, "bad", "✗")}
+                    ${requiredTotal ? "" : "<span>None listed in the job</span>"}
+                </div>
+
+                <h3>Preferred Skills</h3>
+                <div class="skills">
+                    ${skillChips(candidate.preferred_matched, "preferred", "✓")}
+                    ${skillChips(candidate.preferred_missing || [], "bad", "✗")}
+                    ${candidate.preferred_matched.length || candidate.preferred_missing?.length
+                        ? ""
+                        : "<span>None listed in the job</span>"}
+                </div>
+
+                <h3>Resume Preview</h3>
+                <p class="preview">${escapeHtml(candidate.preview)}…</p>
+
+            </div>
+        `;
+    }
+
+    function renderRanking(data) {
+        if (!data.top_candidates.length) {
+            return renderSummary(data) +
+                "<p>No matching resumes found. Try listing specific skills in the job description.</p>";
+        }
+
+        return renderSummary(data) + data.top_candidates
+            .map((candidate, index) =>
+                renderCandidate(candidate, `#${index + 1} ${escapeHtml(candidate.file)}`)
+            )
+            .join("");
+    }
+
+    function renderAnalysis(data) {
+        const suggestions = data.suggestions.length
+            ? `<ul class="suggestions">${data.suggestions
+                .map(s => `<li>${escapeHtml(s)}</li>`).join("")}</ul>`
+            : "<p>Your resume covers everything this job asks for. Nice work!</p>";
+
+        return `
+            ${renderSummary(data)}
+
+            <div class="card">
+                <h2>How You Rank</h2>
+                <p>Your resume would rank <strong>#${data.rank.toLocaleString()}</strong>
+                   out of ${data.out_of.toLocaleString()} resumes for this job.</p>
+            </div>
+
+            <div class="card">
+                <h2>Suggestions</h2>
+                ${suggestions}
+            </div>
+
+            ${renderCandidate(data.result, escapeHtml(data.result.file))}
+        `;
+    }
+</script>
+</body>
+
+</html>
