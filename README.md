@@ -2,7 +2,7 @@
 
 ResumeX matches resumes to job descriptions. Paste a job posting and it ranks 2,484 real resumes by how well they fit, or upload your own resume to see your score, how you'd rank against the dataset and what to improve.
 
-**Live demo:** http://3.14.12.194:8000 <!-- update if the server IP changes -->
+**Live demo:** http://3.150.92.72:8000
 
 ## Features
 
